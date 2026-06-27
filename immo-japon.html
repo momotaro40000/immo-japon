@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immo Japon</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Noto+Sans+JP:wght@300;400&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink:   #1a1a1a;
+    --stone: #8a8680;
+    --red:   #c0392b;
+    --white: #ffffff;
+    --bg:    #f2f0eb;
+    --border:#e0ddd8;
+  }
+  html, body {
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar {
+    flex-shrink: 0;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    z-index: 1000;
+    padding: 8px 16px 10px;
+  }
+  .topbar-row1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .logo { display: flex; align-items: center; gap: 7px; }
+  .logo-jp { font-family: 'Noto Sans JP', sans-serif; font-weight: 300; font-size: 16px; letter-spacing: 0.06em; }
+  .logo-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
+  .count-badge { font-size: 12px; color: var(--stone); }
+  .count-badge b { color: var(--red); font-weight: 500; }
+
+  /* Filtres */
+  .filters { display: flex; flex-direction: column; gap: 6px; }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .filter-label-box {
+    flex-shrink: 0;
+    width: 110px;
+    text-align: right;
+  }
+  .filter-name {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--stone);
+    display: block;
+  }
+  .filter-val {
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .filter-sub {
+    font-size: 9px;
+    color: var(--stone);
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .slider-wrap {
+    flex: 1;
+    position: relative;
+    height: 24px;
+    display: flex;
+    align-items: center;
+  }
+  .slider-track { position: absolute; left: 0; right: 0; height: 2px; background: var(--border); border-radius: 2px; }
+  .slider-fill  { position: absolute; left: 0; height: 2px; background: var(--red); border-radius: 2px; pointer-events: none; }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 2px;
+    background: transparent; position: relative; z-index: 2; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--red);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .slider-limits { display: flex; justify-content: space-between; font-size: 9px; color: var(--stone); margin-top: 1px; }
+
+  .legend-inline { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--stone); }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  #map { flex: 1; z-index: 1; }
+
+  /* Popup */
+  .leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    padding: 0; overflow: hidden; border: none;
+  }
+  .leaflet-popup-content { margin: 0; width: 220px !important; }
+  .leaflet-popup-tip-container { display: none; }
+
+  .popup-img { width: 100%; height: 140px; object-fit: cover; display: block; background: #eee; }
+  .popup-img-placeholder { width: 100%; height: 140px; background: #f0ede8; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .popup-body { padding: 12px 14px; }
+  .popup-price { font-size: 22px; font-weight: 400; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 2px; }
+  .popup-yen { font-size: 10px; color: var(--stone); font-family: 'Noto Sans JP', sans-serif; margin-bottom: 8px; }
+  .popup-surfaces { font-size: 11px; color: var(--stone); margin-bottom: 10px; }
+  .popup-link {
+    display: block; text-align: center; padding: 9px;
+    background: var(--ink); color: var(--white);
+    text-decoration: none; font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    border-radius: 4px;
+  }
+  .popup-link:hover { background: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-row1">
+    <div class="logo">
+      <span class="logo-jp">家探し</span>
+      <div class="logo-dot"></div>
+      <span style="font-size:11px;color:var(--stone);letter-spacing:0.1em;text-transform:uppercase;">Immo Japon</span>
+    </div>
+    <div class="count-badge"><b id="visible-count">—</b> annonces</div>
+  </div>
+
+  <div class="filters">
+
+    <!-- Budget -->
+    <div class="filter-row">
+      <div class="filter-label-box">
+        <span class="filter-name">Budget max</span>
+        <span class="filter-val" id="val-budget">50 000 $</span>
+        <span class="filter-sub" id="sub-budget">≈ 775 万円</span>
+      </div>
+      <div style="flex:1">
+        <div class="slider-wrap">
+          <div class="slider-track"></div>
+          <div class="slider-fill" id="fill-budget"></div>
+          <input type="range" id="sl-budget" min="0" max="100000" value="50000" step="1000">
+        </div>
+        <div class="slider-limits"><span>0 $</span><span>100 000 $</span></div>
+      </div>
+    </div>
+
+    <!-- Maison -->
+    <div class="filter-row">
+      <div class="filter-label-box">
+        <span class="filter-name">Maison min</span>
+        <span class="filter-val" id="val-maison">0 m²</span>
+        <span class="filter-sub">si connu</span>
+      </div>
+      <div style="flex:1">
+        <div class="slider-wrap">
+          <div class="slider-track"></div>
+          <div class="slider-fill" id="fill-maison"></div>
+          <input type="range" id="sl-maison" min="0" max="300" value="0" step="5">
+        </div>
+        <div class="slider-limits"><span>0 m²</span><span>300 m²</span></div>
+      </div>
+    </div>
+
+    <!-- Terrain -->
+    <div class="filter-row">
+      <div class="filter-label-box">
+        <span class="filter-name">Terrain min</span>
+        <span class="filter-val" id="val-terrain">0 m²</span>
+        <span class="filter-sub">si connu</span>
+      </div>
+      <div style="flex:1">
+        <div class="slider-wrap">
+          <div class="slider-track"></div>
+          <div class="slider-fill" id="fill-terrain"></div>
+          <input type="range" id="sl-terrain" min="0" max="5000" value="0" step="50">
+        </div>
+        <div class="slider-limits"><span>0 m²</span><span>5 000 m²</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend-inline">
+    <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div>- de 15k$</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f39c12"></div>15k – 35k$</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c0392b"></div>+ de 35k$</div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script>
+const JPY_TO_USD = 155;
+
+function priceColor(usd) {
+  if (usd < 15000) return "#2ecc71";
+  if (usd < 35000) return "#f39c12";
+  return "#c0392b";
+}
+
+function makeSvgIcon(color) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+    <circle cx="14" cy="14" r="10" fill="${color}" stroke="white" stroke-width="2.5" opacity="0.93"/>
+    <line x1="14" y1="24" x2="14" y2="34" stroke="${color}" stroke-width="2" opacity="0.45"/>
+  </svg>`;
+  return L.divIcon({ html:svg, className:'', iconSize:[28,36], iconAnchor:[14,34], popupAnchor:[0,-34] });
+}
+
+const map = L.map('map', { zoomControl:false }).setView([34.9, 133.9], 9);
+L.control.zoom({ position:'bottomright' }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution:'© OpenStreetMap © CartoDB', subdomains:'abcd', maxZoom:18
+}).addTo(map);
+
+let allMarkers = [];
+const imgCache = {};
+
+function buildPopupHtml(l, imgUrl) {
+  const usd = l.price_usd.toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0});
+  const img = imgUrl
+    ? `<img class="popup-img" src="${imgUrl}" alt="" onerror="this.style.display='none'">`
+    : `<div class="popup-img-placeholder">🏠</div>`;
+  const surfaces = [];
+  if (l.maison_m2)  surfaces.push(`🏠 ${l.maison_m2} m²`);
+  if (l.terrain_m2) surfaces.push(`🌿 ${l.terrain_m2} m²`);
+  const surfHtml = surfaces.length
+    ? `<div class="popup-surfaces">${surfaces.join('  ·  ')}</div>`
+    : '';
+  return `${img}
+    <div class="popup-body">
+      <div class="popup-price">${usd}</div>
+      <div class="popup-yen">${l.price_man}万円 = ${(l.price_man*10000).toLocaleString()}¥</div>
+      ${surfHtml}
+      <a class="popup-link" href="${l.url}" target="_blank">Voir l'annonce →</a>
+    </div>`;
+}
+
+function loadPopupImage(l, popup) {
+  if (imgCache[l.url] !== undefined) {
+    popup.setContent(buildPopupHtml(l, imgCache[l.url]));
+    return;
+  }
+  fetch(`/proxy?url=${encodeURIComponent(l.url)}`)
+    .then(r => r.json())
+    .then(data => {
+      imgCache[l.url] = data.img || null;
+      popup.setContent(buildPopupHtml(l, imgCache[l.url]));
+    })
+    .catch(() => { imgCache[l.url] = null; });
+}
+
+// Filtres
+function getFilters() {
+  return {
+    budget:  parseInt(document.getElementById('sl-budget').value),
+    maison:  parseInt(document.getElementById('sl-maison').value),
+    terrain: parseInt(document.getElementById('sl-terrain').value),
+  };
+}
+
+function isVisible(data, f) {
+  // Budget : toujours filtré
+  if (data.price_usd > f.budget) return false;
+  // Maison : filtré seulement si on a la donnée ET le filtre > 0
+  if (f.maison > 0 && data.maison_m2 && data.maison_m2 < f.maison) return false;
+  // Terrain : idem
+  if (f.terrain > 0 && data.terrain_m2 && data.terrain_m2 < f.terrain) return false;
+  return true;
+}
+
+function updateMap() {
+  const f = getFilters();
+  let visible = 0;
+  allMarkers.forEach(({ marker, data }) => {
+    if (isVisible(data, f)) {
+      marker.setIcon(makeSvgIcon(priceColor(data.price_usd)));
+      marker.setOpacity(1);
+      visible++;
+    } else {
+      marker.setOpacity(0.12);
+      marker.closePopup();
+    }
+  });
+  document.getElementById('visible-count').textContent = visible;
+}
+
+fetch('listings.json')
+  .then(r => r.json())
+  .then(listings => {
+    const withGps = listings.filter(l => l.lat && l.lng);
+
+    // Jitter : disperse les points trop proches pour éviter les empilements
+    // Les coordonnées géocodées par ville/quartier donnent souvent le même point
+    function jitter(items) {
+      const THRESHOLD = 0.004; // ~400m — en dessous on considère "même endroit"
+      const MAX_SHIFT = 0.012; // décalage max ~1.3km
+      const placed = [];
+      return items.map(l => {
+        let lat = l.lat, lng = l.lng;
+        for (let i = 0; i < 30; i++) {
+          const clash = placed.some(p =>
+            Math.abs(p.lat - lat) < THRESHOLD && Math.abs(p.lng - lng) < THRESHOLD
+          );
+          if (!clash) break;
+          const angle = Math.random() * 2 * Math.PI;
+          const dist  = (0.3 + Math.random() * 0.7) * MAX_SHIFT;
+          lat = l.lat + Math.cos(angle) * dist;
+          lng = l.lng + Math.sin(angle) * dist;
+        }
+        placed.push({ lat, lng });
+        return { ...l, lat, lng };
+      });
+    }
+
+    const dispersed = jitter(withGps);
+    dispersed.forEach(l => {
+      const marker = L.marker([l.lat, l.lng], { icon: makeSvgIcon(priceColor(l.price_usd)) });
+      const popup = L.popup({ maxWidth:220, minWidth:220 }).setContent(buildPopupHtml(l, null));
+      marker.bindPopup(popup);
+      marker.on('click', () => loadPopupImage(l, popup));
+      marker.addTo(map);
+      allMarkers.push({ marker, data: l });
+    });
+    if (dispersed.length > 0) {
+      const group = L.featureGroup(allMarkers.map(m => m.marker));
+      map.fitBounds(group.getBounds().pad(0.1));
+    }
+    updateMap();
+  });
+
+// Sliders
+function setupSlider(slId, fillId, valId, formatter, subId, subFormatter) {
+  const sl   = document.getElementById(slId);
+  const fill = document.getElementById(fillId);
+  const valEl = document.getElementById(valId);
+  const subEl = subId ? document.getElementById(subId) : null;
+
+  function update() {
+    const v = parseInt(sl.value);
+    fill.style.width = (v / parseInt(sl.max) * 100) + '%';
+    valEl.textContent = formatter(v);
+    if (subEl && subFormatter) subEl.textContent = subFormatter(v);
+    updateMap();
+  }
+  sl.addEventListener('input', update);
+  update();
+}
+
+setupSlider('sl-budget', 'fill-budget', 'val-budget',
+  v => v.toLocaleString('en-US') + ' $',
+  'sub-budget',
+  v => '≈ ' + Math.round(v * JPY_TO_USD / 10000).toLocaleString() + ' 万円'
+);
+setupSlider('sl-maison', 'fill-maison', 'val-maison',
+  v => v === 0 ? 'tous' : v + ' m²'
+);
+setupSlider('sl-terrain', 'fill-terrain', 'val-terrain',
+  v => v === 0 ? 'tous' : v.toLocaleString() + ' m²'
+);
+</script>
+</body>
+</html>
