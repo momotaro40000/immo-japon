@@ -260,7 +260,7 @@ function loadPopupImage(l, popup) {
     popup.setContent(buildPopupHtml(l, imgCache[l.url]));
     return;
   }
-  fetch(`/proxy?url=${encodeURIComponent(l.url)}`)
+  fetch(`http://136.244.83.137:8000/proxy?url=${encodeURIComponent(l.url)}`)
     .then(r => r.json())
     .then(data => {
       imgCache[l.url] = data.img || null;
