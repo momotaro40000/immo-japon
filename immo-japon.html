@@ -283,8 +283,8 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 let markerLayer = L.layerGroup().addTo(map);
 
 function priceColor(usd) {
-  if (usd <= 15000) return "#2ecc71";
-  if (usd <= 30000) return "#f39c12";
+  if (usd <= 10000) return "#2ecc71";
+  if (usd <= 25000) return "#f39c12";
   return "#c0392b";
 }
 
