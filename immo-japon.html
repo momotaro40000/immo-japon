@@ -8,9 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --ink:    #1a1a1a;
     --stone:  #8a8680;
@@ -20,189 +18,81 @@
     --red:    #c0392b;
     --green:  #2ecc71;
     --orange: #f39c12;
+    --blue:   #3498db;
   }
-
   html, body {
     font-family: 'Inter', 'Noto Sans JP', sans-serif;
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background: var(--mist);
-    color: var(--ink);
+    height: 100%; overflow: hidden;
+    display: flex; flex-direction: column;
+    background: var(--mist); color: var(--ink);
   }
-
-  /* ── HEADER ── */
   .header {
-    flex-shrink: 0;
-    background: var(--white);
+    flex-shrink: 0; background: var(--white);
     border-bottom: 1px solid var(--border);
-    padding: 10px 16px;
-    z-index: 1000;
+    padding: 10px 16px; z-index: 1000;
   }
-
   .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 10px;
   }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .logo-kanji {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-weight: 300;
-    font-size: 18px;
-    letter-spacing: 0.05em;
-  }
-  .logo-sep {
-    width: 1px;
-    height: 16px;
-    background: var(--border);
-  }
-  .logo-latin {
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--stone);
-  }
-
-  .count {
-    font-size: 12px;
-    color: var(--stone);
-  }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-kanji { font-family: 'Noto Sans JP', sans-serif; font-weight: 300; font-size: 18px; letter-spacing: 0.05em; }
+  .logo-sep { width: 1px; height: 16px; background: var(--border); }
+  .logo-latin { font-size: 10px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--stone); }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .count { font-size: 12px; color: var(--stone); }
   .count b { color: var(--red); font-weight: 500; }
-
-  /* ── FILTRES ── */
-  .filters {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-  }
-
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex: 1;
-  }
-
-  .field label {
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--stone);
-  }
-
-  .field input {
-    width: 100%;
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font-size: 14px;
-    font-family: inherit;
-    background: var(--mist);
-    color: var(--ink);
-    outline: none;
+  .btn-locate {
+    background: none; border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 8px;
+    font-size: 16px; cursor: pointer; line-height: 1;
     transition: border-color 0.15s;
   }
-  .field input:focus {
-    border-color: var(--red);
-    background: var(--white);
+  .btn-locate:hover { border-color: var(--blue); }
+  .btn-locate.active { border-color: var(--blue); background: #ebf5fb; }
+  .filters { display: flex; gap: 8px; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .field label { font-size: 9px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); }
+  .field input {
+    width: 100%; padding: 7px 10px;
+    border: 1px solid var(--border); border-radius: 4px;
+    font-size: 14px; font-family: inherit;
+    background: var(--mist); color: var(--ink); outline: none;
+    transition: border-color 0.15s;
   }
+  .field input:focus { border-color: var(--red); background: var(--white); }
   .field input::placeholder { color: #bbb; }
-
   .btn-search {
-    flex-shrink: 0;
-    padding: 7px 16px;
-    background: var(--ink);
-    color: var(--white);
-    border: none;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-    transition: background 0.15s;
-    white-space: nowrap;
+    flex-shrink: 0; padding: 7px 16px;
+    background: var(--ink); color: var(--white);
+    border: none; border-radius: 4px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.08em;
+    cursor: pointer; transition: background 0.15s; white-space: nowrap;
   }
   .btn-search:hover { background: var(--red); }
-  .btn-search:active { transform: scale(0.98); }
-
-  /* ── LÉGENDE ── */
-  .legend {
-    display: flex;
-    gap: 14px;
-    margin-top: 8px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    color: var(--stone);
-  }
-  .legend-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  /* ── CARTE ── */
+  .legend { display: flex; gap: 14px; margin-top: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--stone); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   #map { flex: 1; z-index: 1; }
-
-  /* ── POPUP ── */
   .leaflet-popup-content-wrapper {
-    border-radius: 8px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-    padding: 0;
-    overflow: hidden;
-    border: none;
+    border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    padding: 0; overflow: hidden; border: none;
   }
   .leaflet-popup-content { margin: 0; width: 220px !important; }
   .leaflet-popup-tip-container { display: none; }
-
-  .popup-img {
-    width: 100%; height: 140px;
-    object-fit: cover; display: block;
-  }
-  .popup-placeholder {
-    width: 100%; height: 140px;
-    background: var(--mist);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
-  }
+  .popup-img { width: 100%; height: 140px; object-fit: cover; display: block; }
+  .popup-placeholder { width: 100%; height: 140px; background: var(--mist); display: flex; align-items: center; justify-content: center; font-size: 32px; }
   .popup-body { padding: 12px 14px; }
-  .popup-price {
-    font-size: 22px; font-weight: 400;
-    letter-spacing: -0.02em; margin-bottom: 2px;
-  }
-  .popup-yen {
-    font-size: 10px; color: var(--stone);
-    font-family: 'Noto Sans JP', sans-serif;
-    margin-bottom: 8px;
-  }
-  .popup-surfaces {
-    font-size: 11px; color: var(--stone);
-    margin-bottom: 10px;
-  }
+  .popup-price { font-size: 22px; font-weight: 400; letter-spacing: -0.02em; margin-bottom: 2px; }
+  .popup-yen { font-size: 10px; color: var(--stone); font-family: 'Noto Sans JP', sans-serif; margin-bottom: 8px; }
+  .popup-surfaces { font-size: 11px; color: var(--stone); margin-bottom: 10px; }
   .popup-btn {
-    display: block; text-align: center;
-    padding: 9px; background: var(--ink);
-    color: var(--white); text-decoration: none;
-    font-size: 11px; font-weight: 500;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    border-radius: 4px;
+    display: block; text-align: center; padding: 9px;
+    background: var(--ink); color: var(--white); text-decoration: none;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+    text-transform: uppercase; border-radius: 4px;
   }
   .popup-btn:hover { background: var(--red); }
-
-  /* Loading */
   #map-loading {
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -220,7 +110,10 @@
       <div class="logo-sep"></div>
       <span class="logo-latin">Immo Japon</span>
     </div>
-    <div class="count"><b id="count">—</b> annonces</div>
+    <div class="header-right">
+      <button class="btn-locate" id="btn-locate" onclick="toggleLocate()" title="Ma position">📍</button>
+      <div class="count"><b id="count">—</b> annonces</div>
+    </div>
   </div>
 
   <div class="filters">
@@ -240,9 +133,10 @@
   </div>
 
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>0–10k$</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>10–20k$</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>20–50k$</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>0–15k$</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>15–30k$</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>30–50k$</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Ma position</div>
   </div>
 </div>
 
@@ -251,7 +145,6 @@
 </div>
 
 <script>
-// ── SUPABASE CONFIG ───────────────────────────────────────────────
 const SB_URL = "https://obhpugsucgtwbmqrfdzr.supabase.co";
 const SB_KEY = "sb_publishable_Dkbl8hh9OyOlmOqIEVAzbg_yfvvqpaj";
 
@@ -262,29 +155,76 @@ async function supabaseQuery(filters) {
   if (filters.maison > 0)  url += `&maison_m2=gte.${filters.maison}`;
   if (filters.terrain > 0) url += `&terrain_m2=gte.${filters.terrain}`;
   url += `&limit=1000`;
-
   const r = await fetch(url, {
-    headers: {
-      "apikey": SB_KEY,
-      "Authorization": `Bearer ${SB_KEY}`,
-    }
+    headers: { "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}` }
   });
   return r.json();
 }
 
-// ── CARTE ────────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: false }).setView([34.9, 133.9], 8);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CartoDB',
-  subdomains: 'abcd', maxZoom: 18
+  attribution: '© OpenStreetMap © CartoDB', subdomains: 'abcd', maxZoom: 18
 }).addTo(map);
 
 let markerLayer = L.layerGroup().addTo(map);
 
+// ── GÉOLOCALISATION ──
+let myMarker = null;
+let myCircle = null;
+let locateInterval = null;
+let locating = false;
+
+function updatePosition(pos) {
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+  const acc = pos.coords.accuracy;
+
+  if (myMarker) {
+    myMarker.setLatLng([lat, lng]);
+    myCircle.setLatLng([lat, lng]).setRadius(acc);
+  } else {
+    myCircle = L.circle([lat, lng], {
+      radius: acc, color: '#3498db', fillColor: '#3498db',
+      fillOpacity: 0.1, weight: 1
+    }).addTo(map);
+    myMarker = L.circleMarker([lat, lng], {
+      radius: 8, fillColor: '#3498db', color: 'white',
+      weight: 2.5, fillOpacity: 1
+    }).addTo(map).bindPopup('📍 Vous êtes ici');
+    map.setView([lat, lng], 11);
+  }
+}
+
+function toggleLocate() {
+  const btn = document.getElementById('btn-locate');
+  if (locating) {
+    // Arrêter
+    clearInterval(locateInterval);
+    locateInterval = null;
+    locating = false;
+    btn.classList.remove('active');
+    if (myMarker) { map.removeLayer(myMarker); myMarker = null; }
+    if (myCircle) { map.removeLayer(myCircle); myCircle = null; }
+  } else {
+    // Démarrer
+    if (!navigator.geolocation) { alert("Géolocalisation non disponible"); return; }
+    locating = true;
+    btn.classList.add('active');
+    navigator.geolocation.getCurrentPosition(updatePosition, () => {
+      locating = false; btn.classList.remove('active');
+    });
+    // Mise à jour toutes les 3 secondes
+    locateInterval = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(updatePosition, () => {});
+    }, 3000);
+  }
+}
+
+// ── CARTE ──
 function priceColor(usd) {
-  if (usd <= 10000) return "#2ecc71";
-  if (usd <= 20000) return "#f39c12";
+  if (usd <= 15000) return "#2ecc71";
+  if (usd <= 30000) return "#f39c12";
   return "#c0392b";
 }
 
@@ -296,10 +236,8 @@ function makeIcon(color) {
   return L.divIcon({ html: svg, className: '', iconSize: [26,34], iconAnchor: [13,32], popupAnchor: [0,-30] });
 }
 
-// Jitter : disperse les points trop proches
 function jitter(items) {
-  const THR = 0.004;
-  const MAX = 0.013;
+  const THR = 0.004, MAX = 0.013;
   const placed = [];
   return items.map(l => {
     let lat = l.lat, lng = l.lng;
@@ -347,16 +285,13 @@ async function doSearch() {
   try {
     const data = await supabaseQuery({ budget, maison, terrain });
     document.getElementById('map-loading').style.display = 'none';
-
     const dispersed = jitter(data);
     dispersed.forEach(l => {
       const marker = L.marker([l.lat, l.lng], { icon: makeIcon(priceColor(l.price_usd)) });
       marker.bindPopup(buildPopup(l), { maxWidth: 220, minWidth: 220 });
       markerLayer.addLayer(marker);
     });
-
     document.getElementById('count').textContent = data.length;
-
     if (data.length > 0) {
       const group = L.featureGroup(markerLayer.getLayers());
       map.fitBounds(group.getBounds().pad(0.1));
@@ -367,7 +302,6 @@ async function doSearch() {
   }
 }
 
-// Lancement initial
 doSearch();
 </script>
 </body>
